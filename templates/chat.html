@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}
+    - bilan chat
+{% endblock title %}
+
+{% block content %}
+<div class="chat">
+    <div class="chat-header clearfix">
+      <img style="width: 50px; height: 50px; border-radius: 50%;" src="{{user.profile.picture.url}}" alt="avatar" />
+      
+      <div class="chat-about">
+        <div class="chat-with">{{user.get_full_name}}</div>
+        <div class="chat-num-messages">{{user.profile.status}}</div>
+      </div>
+      <i class="fa fa-star"></i>
+    </div> <!-- end chat-header -->
+    
+    <div class="chat-history">
+      <ul id="chat-messages" >
+       
+      </ul>
+      
+    </div> <!-- end chat-history -->
+    
+    <div class="chat-message clearfix">
+      <input name="message-to-send" id="chat-message-input" placeholder ="Type your message">
+              
+      <i class="fa fa-file-o"></i> &nbsp;&nbsp;&nbsp;
+      <i class="fa fa-file-image-o"></i>
+      
+      <button id="chat-message-submit" >Send</button>
+
+    </div> <!-- end chat-message -->
+    
+  </div> <!-- end chat -->
+  
+    <script>
+        const roomName = `{{chatgroup.name}}`
+        const user_id = `{{request.user.id}}`
+        const chatMessages = document.getElementById("chat-messages")
+        const chatHistory = document.querySelector(".chat-history")
+
+        function scrollBottom(){
+          chatHistory.scrollTop = chatHistory.scrollHeight
+        }
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+            + roomName
+            + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+
+            var myMessageHtml = '<li class="clearfix">\
+                                  <div class="message-data align-right">\
+                                    <span class="message-data-time" >' + data.time + 
+                                    '<span class="message-data-name" >  {{request.user.first_name}}</span> <i class="fa fa-circle me"></i>\
+                                  </div>\
+                                  <div class="message other-message float-right">' + 
+                                    data.message + '</div> </li>'
+
+            var chatMessageHtml = '<li>\
+                                    <div class="message-data">\
+                                      <span class="message-data-name"><i class="fa fa-circle online"></i>{{user.first_name}}</span>\
+                                      <span class="message-data-time"> ' + data.time +
+                                    '</div>\
+                                    <div class="message my-message"> '+ data.message +'</div> </li>'
+            if (data.sender_id == user_id){
+              messageHtml=myMessageHtml
+            }else{
+              messageHtml=chatMessageHtml
+            };
+            chatMessages.innerHTML +=messageHtml;
+            scrollBottom();
+
+           
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'sender_id':user_id,
+            }));
+            messageInputDom.value = '';
+        };
+        scrollBottom();
+    </script>
+{% endblock content %}
