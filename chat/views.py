@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
-# @login_required
+@login_required
 def index(request):
     users = User.objects.exclude(id=request.user.id)
     return render(request, "index.html", {"users":users,})
@@ -15,7 +15,7 @@ def index(request):
 
 
 
-# @login_required
+@login_required
 def chat(request, username):
     users = User.objects.exclude(id=request.user.id)
     user1 = request.user
