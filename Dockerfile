@@ -9,11 +9,24 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 
-RUN pip install --upgrade pip
+RUN apt-get update && apt-get install -y netcat
+
+
+RUN pip install --upgrade
+
+
+
 
 COPY ./requirements.txt .
 
 RUN pip install -r requirements.txt
 
+# entrypoint tanib olishi uchun
+COPY ./entrypoint.sh .   
+RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
+RUN chmod +x /usr/src/app/entrypoint.sh
+
 # appni ichidagi hamma faylni dockerga joylash uchun
 COPY . .  
+
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
